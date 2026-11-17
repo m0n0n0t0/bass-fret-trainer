@@ -106,8 +106,42 @@
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; background: var(--surface);
     border-radius: 18px 18px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom)); z-index: 11;
     transform: translateY(105%); transition: transform .25s cubic-bezier(.2,.8,.2,1); max-height: 86vh; overflow: auto; }
-  body.sheet-open .scrim { opacity: 1; pointer-events: auto; }
-  body.sheet-open .sheet { transform: none; }
+  body.sheet-open .scrim, body.prog-open .scrim { opacity: 1; pointer-events: auto; }
+  body.sheet-open #sheet, body.prog-open #progSheet { transform: none; }
+  .brand { white-space: nowrap; }
+  .brand .stage-tag { color: var(--ink3); font-weight: 500; }
+  @media (max-width: 430px) { .brand .bt { display: none; } .brand .stage-tag { color: var(--ink2); font-weight: 600; } }
+  /* progress */
+  :root { --warn: #c98a1b; }
+  @media (prefers-color-scheme: dark) { :root { --warn: #e0a83a; } }
+  .pg-summary { display: flex; gap: 22px; margin: 10px 0 16px; }
+  .pg-summary .k { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .pg-summary .l { font-size: 12px; color: var(--ink3); }
+  .pgrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  .pgrid .pc { height: 38px; border-radius: 8px; display: grid; place-items: center; font-size: 12.5px; font-weight: 600;
+    background: var(--bg); border: 1px solid var(--hair); color: var(--ink2); }
+  .pgrid .pc.good { background: color-mix(in srgb, var(--good) 22%, var(--surface)); border-color: var(--good); color: var(--ink); }
+  .pgrid .pc.mid  { background: color-mix(in srgb, var(--warn) 22%, var(--surface)); border-color: var(--warn); color: var(--ink); }
+  .pgrid .pc.weak { background: color-mix(in srgb, var(--bad) 20%, var(--surface)); border-color: var(--bad); color: var(--ink); }
+  .pgrid .pc.locked { opacity: .35; border-style: dashed; }
+  .pgfrets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-top: 4px; }
+  .pgfrets span { text-align: center; font-size: 11px; color: var(--ink3); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0 4px; font-size: 12px; color: var(--ink2); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--hair); }
+  .legend .g { background: var(--good); border-color: var(--good); } .legend .m { background: var(--warn); border-color: var(--warn); }
+  .legend .w { background: var(--bad); border-color: var(--bad); } .legend .n { background: var(--bg); }
+  .stages { margin-top: 14px; }
+  .stg { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hair); font-size: 14px; }
+  .stg:last-child { border-bottom: 0; }
+  .stg .b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+    border: 1.5px solid var(--hair); color: var(--ink3); }
+  .stg.done .b { background: var(--good); border-color: var(--good); color: #fff; }
+  .stg.cur .b { border-color: var(--ink); color: var(--ink); }
+  .stg .t { flex: 1; } .stg .s { font-size: 12px; color: var(--ink3); }
+  .stg.locked { color: var(--ink3); }
+  .reset { margin-top: 18px; width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--hair); background: transparent;
+    color: var(--bad); font-size: 14px; cursor: pointer; }
+  .pg-note { font-size: 12px; color: var(--ink3); margin-top: 8px; line-height: 1.45; }
   .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--hair); margin: 0 auto 14px; }
   .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .sheet h2 { font-size: 17px; margin: 0; font-weight: 600; }
@@ -139,9 +173,12 @@
 <body>
 <main>
   <div class="top">
-    <div class="brand">Notenlesen · Bünde 0–5</div>
+    <div class="brand"><span class="bt">Notenlesen · </span><span class="stage-tag" id="stageTag"></span></div>
     <div class="top-right">
       <div class="score"><b id="correct">0</b>/<span id="total">0</span> · Serie <b id="streak">0</b></div>
+      <button class="icon-btn" id="openProgress" aria-label="Fortschritt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>
+      </button>
       <button class="icon-btn" id="openSettings" aria-label="Einstellungen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
       </button>
@@ -201,6 +238,8 @@
     <div class="seg" data-key="octave"><button data-v="strict">Streng</button><button data-v="tol">Tolerant</button></div></div>
   <div class="row" id="rowSens"><div><div class="lbl">Empfindlichkeit</div><div class="hint">Höher = leisere Töne werden erkannt</div></div>
     <input type="range" id="sens" min="1" max="10" step="1"></div>
+  <div class="row"><div><div class="lbl">Stufen</div><div class="hint">Töne in Etappen freischalten · Aus = alles üben</div></div>
+    <div class="seg" data-key="stages"><button data-v="1">An</button><button data-v="0">Aus</button></div></div>
   <div class="row" id="rowAll"><div><div class="lbl">Alle Stellen finden</div><div class="hint">Nur beim Tippen möglich</div></div>
     <div class="seg" data-key="all"><button data-v="0">Aus</button><button data-v="1">An</button></div></div>
   <div class="row"><div class="lbl">Referenzton</div>
@@ -209,6 +248,22 @@
     <div class="seg" data-key="tablet"><button data-v="0">Aus</button><button data-v="1">An</button></div></div>
   <div class="row" id="rowMirror"><div class="lbl">Saitenreihenfolge</div>
     <div class="seg" data-key="mirror"><button data-v="0">E … G</button><button data-v="1">G … E</button></div></div>
+</aside>
+
+<aside class="sheet" id="progSheet" aria-label="Fortschritt">
+  <div class="grab"></div>
+  <div class="sheet-head"><h2>Fortschritt</h2><button class="done" id="closeProgress">Fertig</button></div>
+  <div class="pg-summary">
+    <div><div class="k" id="pgGood">0</div><div class="l">sitzen</div></div>
+    <div><div class="k" id="pgOpen">0</div><div class="l">noch offen</div></div>
+    <div><div class="k" id="pgRt">–</div><div class="l">Ø Reaktionszeit</div></div>
+  </div>
+  <div class="pgrid" id="pgrid"></div>
+  <div class="pgfrets"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+  <div class="legend"><span><i class="g"></i>sitzt</span><span><i class="m"></i>wird geübt</span><span><i class="w"></i>wackelt</span><span><i class="n"></i>neu</span></div>
+  <div class="pg-note">„Sitzt“ heißt: mindestens 3-mal gespielt, meist beim ersten Versuch richtig und im Schnitt unter 1,8 s. Gleiche Töne an zwei Stellen teilen sich die Farbe.</div>
+  <div class="stages" id="stageList"></div>
+  <button class="reset" id="resetProgress">Fortschritt zurücksetzen</button>
 </aside>
 
 <script>
@@ -225,7 +280,7 @@
   const NAT_PC = [0, 2, 4, 5, 7, 9, 11];
 
   const defaults = { input: 'mic', notation: 'int', acc: '0', showName: '1', octave: 'strict', sens: 5,
-    all: '0', sound: '1', tablet: '0', mirror: '0' };
+    all: '0', sound: '1', tablet: '0', mirror: '0', stages: '1' };
   let cfg = { ...defaults };
   try { Object.assign(cfg, JSON.parse(localStorage.getItem('bassReader.cfg') || '{}')); } catch (e) {}
   const save = () => { try { localStorage.setItem('bassReader.cfg', JSON.stringify(cfg)); } catch (e) {} };
@@ -464,14 +519,106 @@
     }
   }
 
+  // ================= progress, stages, adaptive selection =================
+  const STAGES = [ // cells as [stringIndex (0=E … 3=G), fret]
+    { name: 'Leere Saiten', cells: [[0, 0], [1, 0], [2, 0], [3, 0]] },
+    { name: '5. und 2. Bund', cells: [[0, 5], [1, 5], [2, 5], [3, 5], [1, 2], [2, 2], [3, 2]] },
+    { name: '1., 3. und 4. Bund', cells: [[0, 1], [0, 3], [1, 3], [2, 3], [3, 4]] },
+    { name: 'Vorzeichen', acc: true },
+  ];
+  let prog = { stats: {}, stage: 0 };
+  try { Object.assign(prog, JSON.parse(localStorage.getItem('bassReader.progress') || '{}')); } catch (e) {}
+  const saveProg = () => { try { localStorage.setItem('bassReader.progress', JSON.stringify(prog)); } catch (e) {} };
+  const GOOD_RT = 1800;
+  function level(m) {
+    const s = prog.stats[m];
+    if (!s || !s.n) return 'new';
+    if (s.n >= 3 && s.acc >= 0.8 && s.rt <= GOOD_RT) return 'good';
+    if (s.acc < 0.5) return 'weak';
+    return 'mid';
+  }
+  function record(m, first, rt) {
+    const s = prog.stats[m] || { n: 0, acc: 0, rt: 0 }, a = 0.35;
+    rt = Math.min(Math.max(rt, 200), 8000);
+    if (!s.n) { s.acc = first ? 1 : 0; s.rt = rt; }
+    else { s.acc = s.acc * (1 - a) + (first ? 1 : 0) * a; s.rt = s.rt * (1 - a) + rt * a; }
+    s.n++; s.last = Date.now(); prog.stats[m] = s; saveProg();
+  }
+  const allPitches = () => [...new Set(cells.map(c => c.midi))].filter(m => on('acc') || NAT_PC.includes(m % 12));
+  const stageCount = () => on('acc') ? STAGES.length : STAGES.length - 1;
+  const curStage = () => Math.min(prog.stage, stageCount() - 1);
+  function stageSet(k) {
+    const S = STAGES[k], set = new Set();
+    if (S.acc) cells.forEach(c => { if (!NAT_PC.includes(c.midi % 12)) set.add(c.midi); });
+    else S.cells.forEach(([si, f]) => set.add(STRINGS[si].open + f));
+    return set;
+  }
+  function poolPitches() {
+    if (!on('stages')) return allPitches();
+    const set = new Set();
+    for (let k = 0; k <= curStage(); k++) stageSet(k).forEach(m => set.add(m));
+    return [...set];
+  }
+  function weight(m) {
+    const s = prog.stats[m];
+    if (!s || !s.n) return 2.5;
+    const speed = Math.max(0, Math.min(1, (4000 - s.rt) / (4000 - 1200)));
+    const mastery = 0.5 * s.acc + 0.5 * speed * (s.n >= 3 ? 1 : 0.6);
+    return 0.35 + 3 * (1 - mastery);
+  }
+  function pickPitch() {
+    let pool = poolPitches();
+    const fresh = pool.filter(m => m !== st.lastMidi); if (fresh.length) pool = fresh;
+    const w = pool.map(weight), sum = w.reduce((a, b) => a + b, 0);
+    let r = Math.random() * sum;
+    for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) return pool[i]; }
+    return pool[pool.length - 1];
+  }
+  function checkUnlock() {
+    if (!on('stages') || curStage() >= stageCount() - 1) return null;
+    if (poolPitches().every(m => level(m) === 'good')) {
+      prog.stage = curStage() + 1; saveProg();
+      return STAGES[prog.stage].name;
+    }
+    return null;
+  }
+  function renderStageTag() {
+    document.getElementById('stageTag').textContent = on('stages')
+      ? `Stufe ${curStage() + 1}/${stageCount()}` : 'Alle Töne';
+  }
+  function renderProgress() {
+    const inPool = new Set(poolPitches()), all = allPitches();
+    const grid = document.getElementById('pgrid'); grid.innerHTML = '';
+    for (let si = 3; si >= 0; si--) for (let f = 0; f < FRETS; f++) {
+      const m = STRINGS[si].open + f, d = document.createElement('div');
+      const usable = on('acc') || NAT_PC.includes(m % 12);
+      d.className = 'pc ' + (usable ? level(m) : 'new') + ((!usable || !inPool.has(m)) ? ' locked' : '');
+      d.textContent = usable ? label(m, spell(m, false)).main : '';
+      grid.appendChild(d);
+    }
+    const scope = [...inPool];
+    const good = scope.filter(m => level(m) === 'good').length;
+    document.getElementById('pgGood').textContent = good;
+    document.getElementById('pgOpen').textContent = scope.length - good;
+    const rts = scope.map(m => prog.stats[m]).filter(s => s && s.n).map(s => s.rt);
+    document.getElementById('pgRt').textContent = rts.length ? (rts.reduce((a, b) => a + b, 0) / rts.length / 1000).toFixed(1).replace('.', ',') + ' s' : '–';
+    const list = document.getElementById('stageList'); list.innerHTML = '';
+    if (!on('stages')) { list.innerHTML = '<div class="pg-note">Stufen sind ausgeschaltet – es werden alle Töne geübt, schwache öfter.</div>'; return; }
+    for (let k = 0; k < stageCount(); k++) {
+      const set = [...stageSet(k)], g = set.filter(m => level(m) === 'good').length;
+      const state = k < curStage() ? 'done' : k === curStage() ? 'cur' : 'locked';
+      const row = document.createElement('div'); row.className = 'stg ' + state;
+      row.innerHTML = `<div class="b">${state === 'done' ? '✓' : k + 1}</div><div class="t">${STAGES[k].name}</div><div class="s">${state === 'locked' ? 'gesperrt' : g + '/' + set.length + ' sitzen'}</div>`;
+      list.appendChild(row);
+    }
+  }
+
   // ================= quiz flow =================
   function newQuestion() {
     clearTimeout(advanceTimer);
     clearMarks();
-    let pool = cells.filter(c => on('acc') || NAT_PC.includes(c.midi % 12)).map(c => c.midi);
-    pool = [...new Set(pool)];
-    const fresh = pool.filter(m => m !== st.lastMidi); if (fresh.length) pool = fresh;
-    const m = pool[Math.floor(Math.random() * pool.length)];
+    const m = pickPitch();
+    st.qStart = performance.now();
     const flat = Math.random() < 0.5;
     st.q = { sounding: m, sp: spell(m, flat), written: spell(m + 12, flat) };
     st.lastMidi = m; st.answered = false; st.firstTry = true; st.found = new Set(); lastWrong = null;
@@ -483,6 +630,8 @@
     st.answered = true;
     if (st.firstTry) { st.correct++; st.streak++; }
     st.total++;
+    record(st.q.sounding, st.firstTry, performance.now() - (st.qStart || performance.now()));
+    const unlocked = checkUnlock();
     clearMarks();
     targets().forEach(c => {
       if (tapped ? st.found.has(c) : false) { c.el.classList.add('good'); }
@@ -493,10 +642,11 @@
     let msg = st.firstTry ? 'Richtig.' : 'Jetzt stimmt’s.';
     if (two && cfg.input === 'mic') msg += ' Spielbar an beiden markierten Stellen.';
     else if (two && !on('all')) msg += ' Auch an der markierten Stelle.';
+    if (unlocked) msg = `Stufe ${curStage() + 1} freigeschaltet: ${unlocked}.`;
     setStatus(msg, 'good');
     render();
     if (cfg.input === 'tap') play(st.q.sounding);
-    advanceTimer = setTimeout(newQuestion, two ? 1700 : 1200);
+    advanceTimer = setTimeout(newQuestion, unlocked ? 2600 : two ? 1700 : 1200);
   }
   function onTap(si, f) {
     const c = cells.find(x => x.si === si && x.f === f);
@@ -532,6 +682,7 @@
     document.getElementById('tSub').textContent = lab.sub;
     document.getElementById('target').classList.toggle('hidden', !on('showName') && !st.answered);
     renderScore();
+    renderStageTag();
     const p = document.getElementById('primary');
     p.textContent = cfg.input === 'mic' ? (st.micOn ? 'Weiter' : 'Mikrofon starten') : 'Weiter';
     document.getElementById('tunerWrap').style.display = cfg.input === 'mic' ? '' : 'none';
@@ -559,18 +710,28 @@
     cfg[k] = v; save(); syncSettings();
     if (k === 'input' && v === 'tap' && st.micOn) stopMic();
     if (k === 'tablet' || k === 'mirror') { buildBoard(); }
-    if (k === 'acc' || k === 'input' || k === 'tablet' || k === 'mirror' || k === 'all') newQuestion(); else render();
+    if (k === 'acc' || k === 'input' || k === 'tablet' || k === 'mirror' || k === 'all' || k === 'stages') newQuestion(); else render();
   }));
   document.getElementById('sens').addEventListener('input', e => { cfg.sens = +e.target.value; save(); });
   const openSheet = () => document.body.classList.add('sheet-open');
   const closeSheet = () => document.body.classList.remove('sheet-open');
   document.getElementById('openSettings').addEventListener('click', openSheet);
+  document.getElementById('openProgress').addEventListener('click', () => { renderProgress(); document.body.classList.add('prog-open'); });
+  document.getElementById('closeProgress').addEventListener('click', () => document.body.classList.remove('prog-open'));
+  document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('prog-open'));
+  const rb = document.getElementById('resetProgress');
+  let armed = false;
+  rb.addEventListener('click', () => {
+    if (!armed) { armed = true; rb.textContent = 'Wirklich alles zurücksetzen?'; setTimeout(() => { armed = false; rb.textContent = 'Fortschritt zurücksetzen'; }, 3000); return; }
+    prog = { stats: {}, stage: 0 }; saveProg(); armed = false; rb.textContent = 'Fortschritt zurücksetzen';
+    renderProgress(); newQuestion();
+  });
   document.getElementById('scrim').addEventListener('click', closeSheet);
   document.getElementById('closeSettings').addEventListener('click', closeSheet);
 
   document.getElementById('primary').addEventListener('click', async () => {
     if (cfg.input === 'mic' && !st.micOn) {
-      if (await startMic()) { render(); setStatus('Spiel die Note.', ''); }
+      if (await startMic()) { st.qStart = performance.now(); render(); setStatus('Spiel die Note.', ''); }
       return;
     }
     newQuestion();
